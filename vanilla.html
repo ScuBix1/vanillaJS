@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+  <title>Vanilla JS Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.fluid.classless.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+  <main>
+    <div>
+      <h1>Vanilla JS Example</h1>
+    </div>
+
+    <hr>
+    <div style="display: flex; align-items: center; gap: 20%;">
+      <button id="fetch-users"
+        style="width: fit-content; display: flex; align-items: center; justify-content: center; flex-basis: 40%;">Nouveaux
+        utilisateurs</button>
+      <button id="add-users" style="flex-basis: 40%;">Ajouter des utilisateur</button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 20px">
+      <div>
+        <label for="filter">Genre:</label>
+        <select name="filter" id="filter">
+          <option value=""></option>
+          <option value="male">Hommes</option>
+          <option value="female">Femmes</option>
+        </select>
+      </div>
+      <div>
+        <label for="filterAge">Age:</label>
+        <select name="filterAge" id="filterAge">
+          <option value=""></option>
+          <option value="asc">Croissant</option>
+          <option value="desc">Décroissant</option>
+        </select>
+      </div>
+
+    </div>
+    <div style=" display: flex; gap: 30px; align-items: start;">
+      <input type="search" id="search" placeholder="Tapez votre recherche..." style="flex-basis: 70%;">
+      <button id="search-button" style="flex-basis: 10%;">Rechercher</button>
+    </div>
+    </div>
+    <table id="tbl-users">
+      <thead>
+        <tr>
+          <th>Photo</th>
+          <th>Nom</th>
+          <th>Email</th>
+          <th>Tel</th>
+          <th>Age</th>
+          <th>Genre</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
+
+  <script>
+    let users = [];
+    let filteredUsers = [];
+
+    const normalizeText = (text) => {
+      return text
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+    };
+
+    const displayUsers = (tab) => {
+      const tbody = document.querySelector("#tbl-users tbody");
+      tbody.innerHTML = "";
+
+      if (users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; font-weight: bold;">Recherche des utilisateurs en cours...</td></tr>`;
+        return;
+      }
+
+      if (tab.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; font-weight: bold;">Aucun utilisateur trouvé</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = tab
+        .map(
+          (user) => `
+    <tr>
+      <td><img src="${user.picture.thumbnail}" alt="${user.name.first} Photo" width="60px" height="60px" style="background: #dddddd"></td>
+      <td>${user.name.first} ${user.name.last}</td>
+      <td>${user.email}</td>
+      <td>${user.phone}</td>
+      <td>${user.dob.age}</td>
+      <td>${user.gender === "female" ? '<i class="fa-solid fa-venus"></i> Femme' : '<i class="fa-solid fa-mars"></i> Homme'}</td>
+    </tr>`
+        )
+        .join("");
+    };
+
+    const fetchUsers = async () => {
+      try {
+        displayUsers([]);
+        const response = await fetch("https://randomuser.me/api/?results=10");
+        const { results } = await response.json();
+        users = [...results];
+        filteredUsers = [...users];
+        applyFilters();
+      } catch (error) {
+        console.error("Erreur lors du chargement des utilisateurs:", error);
+      }
+    };
+
+    const addUsers = async (number) => {
+      try {
+        displayUsers([]);
+        const response = await fetch(`https://randomuser.me/api/?results=${number}`);
+        const { results } = await response.json();
+        users.push(...results);
+        filteredUsers = [...users];
+        applyFilters();
+      } catch (error) {
+        console.error("Erreur lors de l'ajout des utilisateurs:", error);
+      }
+    };
+
+    const applyFilters = () => {
+      let filtered = [...users];
+
+      const genderFilter = document.getElementById("filter").value;
+      if (genderFilter) {
+        filtered = filtered.filter((user) => user.gender === genderFilter);
+      }
+
+      const ageFilter = document.getElementById("filterAge").value;
+      if (ageFilter === "asc") {
+        filtered.sort((a, b) => a.dob.age - b.dob.age);
+      } else if (ageFilter === "desc") {
+        filtered.sort((a, b) => b.dob.age - a.dob.age);
+      }
+
+      filteredUsers = filtered;
+      searchUsers();
+    };
+
+    const searchUsers = () => {
+      const searchValue = normalizeText(document.getElementById("search").value);
+      if (searchValue === "") {
+        displayUsers(filteredUsers);
+        return;
+      }
+
+      const searchWords = searchValue.split(" ");
+
+      const results = filteredUsers.filter((user) => {
+        const fullName = normalizeText(`${user.name.first} ${user.name.last}`);
+        return searchWords.every((word) => fullName.includes(word));
+      });
+
+      displayUsers(results);
+    };
+
+    document.getElementById("filter").addEventListener("change", applyFilters);
+    document.getElementById("filterAge").addEventListener("change", applyFilters);
+    document.getElementById("search").addEventListener("input", searchUsers);
+
+    document.getElementById("fetch-users").addEventListener("click", fetchUsers);
+    document.getElementById("add-users").addEventListener("click", () => addUsers(5));
+    document.addEventListener("DOMContentLoaded", () => {
+      if (users.length <= 0 || filteredUsers <= 0) {
+        document.querySelector("#tbl-users tbody").innerHTML = `<tr><td colspan="6" style="text-align:center; font-weight: bold;">Aucun utilisateur trouvé</td></tr>`;
+      }
+    })
+
+
+
+  </script>
+</body>
+
+</html>
