@@ -78,130 +78,38 @@
             <td>{{ user.email }}</td>
             <td>{{ user.phone }}</td>
             <td>{{ user.dob.age }}</td>
-            <td>{{ user.gender === 'female' ? '<i class="fa-solid fa-venus"></i> Femme' : '<i
-                class="fa-solid fa-venus"></i> Homme' }}</td>
+            <td>{{ user.gender === 'female' ? 'Femme' : 'Homme' }}</td>
           </tr>
         </tbody>
       </table>
     </main>
   </div>
+
   <script>
-    let users = [];
-    let filteredUsers = [];
+    const { createApp, ref, computed, onMounted } = Vue;
 
-    const normalizeText = (text) => {
-      return text
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim();
-    };
+    createApp({
+      setup() {
+        const users = ref([]);
+        const loading = ref(false);
+        const searchQuery = ref("");
+        const selectedGender = ref("");
+        const selectedAgeOrder = ref("");
 
-    const displayUsers = (tab) => {
-      const tbody = document.querySelector("#tbl-users tbody");
-      tbody.innerHTML = "";
-
-      if (users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; font-weight: bold;">Recherche des utilisateurs en cours...</td></tr>`;
-        return;
-      }
-
-      if (tab.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; font-weight: bold;">Aucun utilisateur trouvé</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = tab
-        .map(
-          (user) => `
-    <tr>
-      <td><img src="${user.picture.thumbnail}" alt="${user.name.first} Photo" width="60px" height="60px" style="background: #dddddd"></td>
-      <td>${user.name.first} ${user.name.last}</td>
-      <td>${user.email}</td>
-      <td>${user.phone}</td>
-      <td>${user.dob.age}</td>
-      <td>${user.gender === "female" ? '<i class="fa-solid fa-venus"></i> Femme' : '<i class="fa-solid fa-mars"></i> Homme'}</td>
-    </tr>`
-        )
-        .join("");
-    };
-
-    const fetchUsers = async () => {
-      try {
-        displayUsers([]);
-        const response = await fetch("https://randomuser.me/api/?results=10");
-        const { results } = await response.json();
-        users = [...results];
-        filteredUsers = [...users];
-        applyFilters();
-      } catch (error) {
-        console.error("Erreur lors du chargement des utilisateurs:", error);
-      }
-    };
-
-    const addUsers = async (number) => {
-      try {
-        displayUsers([]);
-        const response = await fetch(`https://randomuser.me/api/?results=${number}`);
-        const { results } = await response.json();
-        users.push(...results);
-        filteredUsers = [...users];
-        applyFilters();
-      } catch (error) {
-        console.error("Erreur lors de l'ajout des utilisateurs:", error);
-      }
-    };
-
-    const applyFilters = () => {
-      let filtered = [...users];
-
-      const genderFilter = document.getElementById("filter").value;
-      if (genderFilter) {
-        filtered = filtered.filter((user) => user.gender === genderFilter);
-      }
-
-      const ageFilter = document.getElementById("filterAge").value;
-      if (ageFilter === "asc") {
-        filtered.sort((a, b) => a.dob.age - b.dob.age);
-      } else if (ageFilter === "desc") {
-        filtered.sort((a, b) => b.dob.age - a.dob.age);
-      }
-
-      filteredUsers = filtered;
-      searchUsers();
-    };
-
-    const searchUsers = () => {
-      const searchValue = normalizeText(document.getElementById("search").value);
-      if (searchValue === "") {
-        displayUsers(filteredUsers);
-        return;
-      }
-
-      const searchWords = searchValue.split(" ");
-
-      const results = filteredUsers.filter((user) => {
-        const fullName = normalizeText(`${user.name.first} ${user.name.last}`);
-        return searchWords.every((word) => fullName.includes(word));
-      });
-
-      displayUsers(results);
-    };
-
-    document.getElementById("filter").addEventListener("change", applyFilters);
-    document.getElementById("filterAge").addEventListener("change", applyFilters);
-    document.getElementById("search").addEventListener("input", searchUsers);
-
-    document.getElementById("fetch-users").addEventListener("click", fetchUsers);
-    document.getElementById("add-users").addEventListener("click", () => addUsers(5));
-    document.addEventListener("DOMContentLoaded", () => {
-      if (users.length <= 0 || filteredUsers <= 0) {
-        document.querySelector("#tbl-users tbody").innerHTML = `<tr><td colspan="6" style="text-align:center; font-weight: bold;">Aucun utilisateur trouvé</td></tr>`;
-      }
-    })
+        const normalizeText = (text) => {
+          return text
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim();
+        };
 
 
+        onMounted(() => { });
 
+        return {};
+      },
+    }).mount("#app");
   </script>
 </body>
 
